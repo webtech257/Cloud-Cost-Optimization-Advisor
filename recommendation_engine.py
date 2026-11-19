@@ -12,19 +12,19 @@ service_cost = df.groupby("Service")["Cost_USD"].sum()
 # Define optimization recommendations
 recommendations = {
     "Amazon EC2":
-        "Right-size underutilized instances, implement automated off-hours scheduling for dev/test environments, and leverage EC2 Spot instances or Savings Plans.",
+        "Review EC2 instance utilization and consider right-sizing oversized instances.",
 
     "Amazon S3":
-        "Review storage classes and configure S3 Intelligent-Tiering and lifecycle policies for infrequently accessed objects.",
+        "Review storage classes and consider lifecycle policies for infrequently accessed data.",
 
     "Amazon RDS":
-        "Review database instance sizing, identify idle or over-provisioned clusters, and schedule non-production databases.",
+        "Review database instance sizing and identify opportunities for optimization.",
 
     "AWS Lambda":
-        "Optimize execution memory allocation and function duration to minimize billed duration GB-seconds.",
+        "Review execution duration and memory allocation to optimize Lambda costs.",
 
     "Amazon CloudWatch":
-        "Review log retention periods and eliminate unneeded custom metrics and frequent alarm polling."
+        "Review log retention periods and unnecessary monitoring metrics."
 }
 
 print("\n====== CLOUD COST OPTIMIZATION RECOMMENDATIONS ======")

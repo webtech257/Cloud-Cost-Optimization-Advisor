@@ -14,7 +14,7 @@ Amazon Relational Database Service,1.26,12,0.15,1.11,"Review database instance s
 Amazon Simple Notification Service,0.0,5,0.0,0.0,Review Amazon Simple Notification Service usage and rightsizing opportunities.
 Amazon Simple Queue Service,0.0,5,0.0,0.0,Review Amazon Simple Queue Service usage and rightsizing opportunities.
 Amazon Simple Storage Service,0.0,10,0.0,0.0,"Review storage classes and consider lifecycle policies (e.g., S3 Intelligent-Tiering)."
-Amazon Virtual Private Cloud,45.91,5,2.3,43.61,Review Amazon Virtual Private Cloud usage and rightsizing opportunities.
+Amazon Virtual Private Cloud,45.9,5,2.29,43.6,Review Amazon Virtual Private Cloud usage and rightsizing opportunities.
 AmazonCloudWatch,18.88,5,0.94,17.94,Review log retention periods and delete unneeded custom metrics.
 EC2 - Other,0.0,15,0.0,0.0,"Right-size underutilized instances, apply automated stop/start scheduling, and leverage Spot instances or Savings Plans."
 Tax,13.68,5,0.68,13.0,Review Tax usage and rightsizing opportunities.

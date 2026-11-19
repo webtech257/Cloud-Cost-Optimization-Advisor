@@ -133,6 +133,6 @@ Date,Service,Usage_Type,Region,Usage_Amount,Cost_USD
 2026-11-01,Amazon Simple Notification Service,CloudUsage,Global/Multi-Region,1,0.0
 2026-11-01,Amazon Simple Queue Service,CloudUsage,Global/Multi-Region,1,0.0
 2026-11-01,Amazon Simple Storage Service,CloudUsage,Global/Multi-Region,1,0.0
-2026-11-01,Amazon Virtual Private Cloud,CloudUsage,Global/Multi-Region,1,2.1
+2026-11-01,Amazon Virtual Private Cloud,CloudUsage,Global/Multi-Region,1,2.09
 2026-11-01,AmazonCloudWatch,CloudUsage,Global/Multi-Region,1,0.88
 2026-11-01,Tax,CloudUsage,Global/Multi-Region,1,0.63

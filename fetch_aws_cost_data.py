@@ -131,6 +131,7 @@ def fetch_real_aws_costs(include_zero_cost: bool = True):
         for period in service_response.get("ResultsByTime", []):
             period_start = period["TimePeriod"]["Start"]
             period_total = 0.0
+            period_services = []
             
             for group in period.get("Groups", []):
                 service_name = group["Keys"][0]
@@ -139,7 +140,7 @@ def fetch_real_aws_costs(include_zero_cost: bool = True):
                 # Include service if cost > 0 or if include_zero_cost is enabled
                 if cost > 0 or include_zero_cost:
                     period_total += cost
-                    service_records.append({
+                    period_services.append({
                         "Date": period_start,
                         "Service": service_name,
                         "Usage_Type": "CloudUsage",
@@ -148,11 +149,20 @@ def fetch_real_aws_costs(include_zero_cost: bool = True):
                         "Cost_USD": round(cost, 2)
                     })
             
+            # Reconcile penny rounding so sum of services matches official AWS invoice total
+            target_period_total = round(period_total, 2)
+            rounded_sum = round(sum(s["Cost_USD"] for s in period_services), 2)
+            diff = round(target_period_total - rounded_sum, 2)
+            if diff != 0 and period_services:
+                highest_svc = max(period_services, key=lambda s: s["Cost_USD"])
+                highest_svc["Cost_USD"] = round(highest_svc["Cost_USD"] + diff, 2)
+
+            service_records.extend(period_services)
             historical_records.append({
                 "Date": period_start,
-                "Cost_USD": round(period_total, 2)
+                "Cost_USD": target_period_total
             })
-            overall_spend += period_total
+            overall_spend += target_period_total
             
         data_dir = Path(__file__).parent / "data"
         data_dir.mkdir(exist_ok=True)
