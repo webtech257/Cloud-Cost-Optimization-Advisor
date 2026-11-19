@@ -12,11 +12,22 @@ CHART_LAYOUT = dict(
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(family="Inter, sans-serif", color="#a5a8c8", size=12),
     margin=dict(l=20, r=20, t=25, b=25),
+    dragmode=False,  # Disables drag-to-zoom completely so touch scrolls the page naturally on mobile
     hoverlabel=dict(
         bgcolor="#11122b",
         bordercolor="#8b5cf6",
         font=dict(family="Inter, sans-serif", color="#f1f2ff", size=12)
     )
+)
+
+PLOTLY_CONFIG = dict(
+    displayModeBar=False,
+    scrollZoom=False,
+    doubleClick=False,
+    showAxisDragHandles=False,
+    showAxisRangeEntryBoxes=False,
+    staticPlot=False,
+    responsive=True
 )
 
 def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
@@ -98,11 +109,13 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
             tickprefix="$",
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         ),
         yaxis=dict(
             showgrid=False,
-            tickfont=dict(color="#f1f2ff", size=11, family="Inter, sans-serif")
+            tickfont=dict(color="#f1f2ff", size=11, family="Inter, sans-serif"),
+            fixedrange=True
         )
     )
     fig.update_layout(**layout_kwargs)
@@ -238,13 +251,15 @@ def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
         xaxis=dict(
             gridcolor="rgba(255, 255, 255, 0.06)",
             tickfont=dict(color="#a5a8c8", size=11),
-            tickangle=-20
+            tickangle=-20,
+            fixedrange=True
         ),
         yaxis=dict(
             tickprefix="$",
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         )
     )
     return fig
@@ -312,13 +327,15 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
         xaxis=dict(
             gridcolor="rgba(255, 255, 255, 0.06)",
             tickformat="%b %Y",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         ),
         yaxis=dict(
             tickprefix="$",
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         )
     )
     return fig
@@ -396,14 +413,16 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
         xaxis=dict(
             gridcolor="rgba(255, 255, 255, 0.06)",
             tickformat="%b %Y",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         ),
         yaxis=dict(
             tickprefix="$",
             range=[0, y_max],
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
-            tickfont=dict(color="#a5a8c8", size=11)
+            tickfont=dict(color="#a5a8c8", size=11),
+            fixedrange=True
         )
     )
     return fig
@@ -432,8 +451,8 @@ def create_service_trend_chart(filtered_df: pd.DataFrame, service_name: str) -> 
     layout_kwargs.update(
         height=220,
         margin=dict(l=10, r=10, t=10, b=10),
-        xaxis=dict(showgrid=False, tickfont=dict(size=10, color="#a5a8c8")),
-        yaxis=dict(tickprefix="$", gridcolor="rgba(255, 255, 255, 0.05)", tickfont=dict(size=10, color="#a5a8c8"))
+        xaxis=dict(showgrid=False, tickfont=dict(size=10, color="#a5a8c8"), fixedrange=True),
+        yaxis=dict(tickprefix="$", gridcolor="rgba(255, 255, 255, 0.05)", tickfont=dict(size=10, color="#a5a8c8"), fixedrange=True)
     )
     fig.update_layout(**layout_kwargs)
     return fig

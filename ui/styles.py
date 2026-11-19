@@ -438,24 +438,163 @@ div[data-testid="stDataFrame"] {
     margin-bottom: 1.5rem;
 }
 
+/* =========================================================
+   Mobile Touch & Chart Scroll Optimization
+   ========================================================= */
+
+/* Ensure the chart wrapper allows standard vertical page scrolling */
+div[data-testid="stPlotlyChart"],
+div[data-testid="stPlotlyChart"] > div,
+.js-plotly-plot,
+.plot-container,
+.plotly,
+.user-select-none {
+    touch-action: pan-y !important;
+    -webkit-user-select: none;
+    user-select: none;
+    max-width: 100% !important;
+}
+
+/* Allow native vertical swipe over the SVG canvas and drag overlays without triggering zoom */
+.js-plotly-plot .main-svg,
+.js-plotly-plot .draglayer,
+.js-plotly-plot .nsewdrag,
+.js-plotly-plot .drag,
+.js-plotly-plot .cursor-crosshair {
+    touch-action: pan-y !important;
+}
+
+.js-plotly-plot .draglayer .nsewdrag {
+    cursor: default !important;
+}
+
 /* Responsiveness */
 @media (max-width: 992px) {
     .hero-banner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1.5rem !important;
     }
     .hero-title {
-        font-size: 2rem;
+        font-size: 2rem !important;
     }
 }
-@media (max-width: 640px) {
+
+@media (max-width: 768px) {
+    /* Safe container padding on mobile screens */
     .block-container {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 3rem !important;
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+    }
+
+    /* Stack multi-column blocks cleanly into 100% full-width cards */
+    div[data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: 0.85rem !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    /* Hero Banner Mobile Styling */
+    .hero-banner {
+        padding: 1.35rem 1.15rem !important;
+        border-radius: 16px !important;
+        margin-bottom: 1.25rem !important;
+        gap: 1rem !important;
     }
     .hero-title {
-        font-size: 1.7rem;
+        font-size: 1.6rem !important;
+        line-height: 1.2 !important;
+    }
+    .hero-subtitle {
+        font-size: 0.95rem !important;
+    }
+    .hero-description {
+        font-size: 0.84rem !important;
+        line-height: 1.45 !important;
+        margin-bottom: 0.85rem !important;
+    }
+    .hero-graphic-wrap {
+        display: none !important; /* Hide large graphic on mobile to avoid vertical pushing */
+    }
+    .hero-chips {
+        gap: 0.4rem !important;
+    }
+    .chip {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.55rem !important;
+    }
+
+    /* KPI Metrics: Full-width glass cards */
+    div[data-testid="stMetric"] {
+        padding: 1rem 1.15rem !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+    }
+    div[data-testid="stMetricValue"] div {
+        font-size: 1.65rem !important;
+    }
+    div[data-testid="stMetricLabel"] p {
+        font-size: 0.74rem !important;
+    }
+
+    /* Section Headers */
+    .section-title {
+        font-size: 1.25rem !important;
+    }
+    .section-subtitle {
+        font-size: 0.8rem !important;
+    }
+
+    /* Radio buttons stack cleanly as full-width tap targets */
+    div[data-testid="stRadio"] > div {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    div[data-testid="stRadio"] label {
+        width: 100% !important;
+        padding: 0.6rem 0.85rem !important;
+        justify-content: flex-start !important;
+    }
+
+    /* DataFrames smooth touch scroll without breaking page width */
+    div[data-testid="stDataFrame"] {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Download button full width on mobile */
+    div[data-testid="stDownloadButton"] button, 
+    div[data-testid="stBaseButton-secondary"] button {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Chart wrappers: full width */
+    div[data-testid="stPlotlyChart"] {
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.45rem !important;
+    }
+    div[data-testid="stMetricValue"] div {
+        font-size: 1.45rem !important;
+    }
+    .block-container {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
     }
 }
 

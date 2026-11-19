@@ -29,7 +29,8 @@ from ui.charts import (
     create_monthly_trend_chart,
     create_forecast_chart,
     create_anomaly_scatter_chart,
-    create_service_trend_chart
+    create_service_trend_chart,
+    PLOTLY_CONFIG
 )
 from fetch_aws_cost_data import fetch_real_aws_costs
 
@@ -188,11 +189,11 @@ col_bar, col_donut = st.columns([1.45, 1.1])
 
 with col_bar:
     fig_bar = create_service_cost_chart(service_cost)
-    st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_bar, use_container_width=True, config=PLOTLY_CONFIG)
 
 with col_donut:
     fig_donut = create_service_donut_chart(service_cost)
-    st.plotly_chart(fig_donut, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_donut, use_container_width=True, config=PLOTLY_CONFIG)
 
 st.divider()
 
@@ -217,7 +218,7 @@ monthly_cost = (
 monthly_cost.index = monthly_cost.index.astype(str)
 
 fig_trend = create_monthly_trend_chart(monthly_cost)
-st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
+st.plotly_chart(fig_trend, use_container_width=True, config=PLOTLY_CONFIG)
 
 st.divider()
 
@@ -242,7 +243,7 @@ if forecast_path.exists():
 
     # Interactive Plotly forecast chart with confidence band
     fig_forecast = create_forecast_chart(forecast_df)
-    st.plotly_chart(fig_forecast, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_forecast, use_container_width=True, config=PLOTLY_CONFIG)
 
     st.write("Forecast Details")
     st.dataframe(
@@ -333,7 +334,7 @@ with col_svc_left:
 with col_svc_right:
     st.write("Monthly Expenditure Breakdown")
     fig_svc = create_service_trend_chart(filtered_df, selected_service)
-    st.plotly_chart(fig_svc, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_svc, use_container_width=True, config=PLOTLY_CONFIG)
 
 st.write("Usage Details")
 st.dataframe(
@@ -423,7 +424,7 @@ if anomaly_path.exists():
     # Spending scatter chart
     st.write("AWS Spending Anomaly Visualization")
     fig_anomaly = create_anomaly_scatter_chart(anomaly_df)
-    st.plotly_chart(fig_anomaly, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_anomaly, use_container_width=True, config=PLOTLY_CONFIG)
 
     # Display detected anomalies
     st.write("Detected Anomaly Details")
