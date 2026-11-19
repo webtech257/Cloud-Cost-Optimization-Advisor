@@ -1,6 +1,7 @@
 """
 Plotly Chart Builders for Cloud Cost Optimization Advisor.
 Custom dark SaaS theme, transparent backgrounds, glowing highlights, and rich hover tooltips.
+Supports dynamic currency formatting and conversion (USD $, INR ₹, etc.).
 """
 
 import plotly.graph_objects as go
@@ -19,11 +20,12 @@ CHART_LAYOUT = dict(
     )
 )
 
-def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
+def create_service_cost_chart(service_cost: pd.Series, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds a premium horizontal bar chart of AWS Service costs.
     Filters out zero-cost items so active spending services are clearly legible.
     The highest-cost service is highlighted with a vivid magenta/violet glow and badge annotation.
+    Supports currency scaling and custom currency symbol.
     """
     # Filter to active spending services (> $0.00) if any exist
     active_cost = service_cost[service_cost > 0]
@@ -32,7 +34,7 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
     # Sort ascending so highest appears at the top of horizontal bar chart
     sorted_series = target_series.sort_values(ascending=True)
     services = sorted_series.index.tolist()
-    costs = sorted_series.values.tolist()
+    costs = (sorted_series * rate).values.tolist()
     total = sum(costs) if sum(costs) > 0 else 1.0
     percentages = [(c / total) * 100 for c in costs]
     
@@ -64,7 +66,7 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
             cornerradius=6
         ),
         customdata=percentages,
-        hovertemplate="<b>%{y}</b><br>Cost: $%{x:,.2f}<br>Share: %{customdata:.1f}%<extra></extra>",
+        hovertemplate=f"<b>%{{y}}</b><br>Cost: {symbol}%{{x:,.2f}}<br>Share: %{{customdata:.1f}}%<extra></extra>",
         showlegend=False
     ))
     
@@ -75,13 +77,13 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
         fig.add_annotation(
             x=max_cost,
             y=max_service,
-            text="Highest Cost",
+            text=f"Highest: {symbol}{max_cost:,.2f}",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
             arrowwidth=1.5,
             arrowcolor="#c084fc",
-            ax=45,
+            ax=50,
             ay=0,
             font=dict(color="#f1f2ff", size=10, family="Inter, sans-serif"),
             bgcolor="rgba(139, 92, 246, 0.4)",
@@ -95,7 +97,7 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
         height=360,
         margin=dict(l=20, r=25, t=25, b=25),
         xaxis=dict(
-            tickprefix="$",
+            tickprefix=symbol,
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
             tickfont=dict(color="#a5a8c8", size=11)
@@ -108,10 +110,11 @@ def create_service_cost_chart(service_cost: pd.Series) -> go.Figure:
     fig.update_layout(**layout_kwargs)
     return fig
 
-def create_service_donut_chart(service_cost: pd.Series) -> go.Figure:
+def create_service_donut_chart(service_cost: pd.Series, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds a modern donut chart showing percentage distribution of cloud services.
     Filters out $0 services and bundles minor services to ensure the legend never overlaps.
+    Supports currency scaling and custom currency symbol.
     """
     # 1. Filter to active spending services (> $0.00)
     active_cost = service_cost[service_cost > 0].sort_values(ascending=False)
@@ -135,7 +138,8 @@ def create_service_donut_chart(service_cost: pd.Series) -> go.Figure:
         total = active_cost.sum()
         
     labels = chart_series.index.tolist()
-    values = chart_series.values.tolist()
+    values = (chart_series * rate).values.tolist()
+    scaled_total = total * rate
     
     palette = [
         "#8b5cf6",  # Vivid Violet
@@ -160,7 +164,7 @@ def create_service_donut_chart(service_cost: pd.Series) -> go.Figure:
         textposition="inside",
         insidetextorientation="horizontal",
         textfont=dict(color="#ffffff", size=11, family="Inter, sans-serif"),
-        hovertemplate="<b>%{label}</b><br>Cost: $%{value:,.2f}<br>Share: %{percent}<extra></extra>"
+        hovertemplate=f"<b>%{{label}}</b><br>Cost: {symbol}%{{value:,.2f}}<br>Share: %{{percent}}<extra></extra>"
     )])
     
     layout_kwargs = dict(CHART_LAYOUT)
@@ -177,7 +181,7 @@ def create_service_donut_chart(service_cost: pd.Series) -> go.Figure:
             font=dict(size=10, color="#a5a8c8", family="Inter, sans-serif")
         ),
         annotations=[dict(
-            text=f"Total<br><b>${total:,.2f}</b>",
+            text=f"Total<br><b>{symbol}{scaled_total:,.2f}</b>",
             x=0.5,
             y=0.62,              # Center of donut: (0.24 + 1.0) / 2 = 0.62
             font=dict(size=13, color="#f1f2ff", family="Space Grotesk, sans-serif"),
@@ -187,12 +191,13 @@ def create_service_donut_chart(service_cost: pd.Series) -> go.Figure:
     fig.update_layout(**layout_kwargs)
     return fig
 
-def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
+def create_monthly_trend_chart(monthly_cost: pd.Series, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds a spline area-line chart for monthly AWS spending trends.
+    Supports currency scaling and custom currency symbol.
     """
     dates = [str(d) for d in monthly_cost.index]
-    costs = monthly_cost.values.tolist()
+    costs = (monthly_cost * rate).values.tolist()
     
     fig = go.Figure()
     
@@ -206,7 +211,7 @@ def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
         fill="tozeroy",
         fillcolor="rgba(139, 92, 246, 0.15)",
         marker=dict(size=8, color="#c084fc", line=dict(color="#ffffff", width=1.5)),
-        hovertemplate="<b>%{x}</b><br>Spend: $%{y:,.2f}<extra></extra>"
+        hovertemplate=f"<b>%{{x}}</b><br>Spend: {symbol}%{{y:,.2f}}<extra></extra>"
     ))
     
     # Annotate peak month
@@ -217,7 +222,7 @@ def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
         fig.add_annotation(
             x=peak_date,
             y=peak_val,
-            text=f"Peak: ${peak_val:,.2f}",
+            text=f"Peak: {symbol}{peak_val:,.2f}",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
@@ -241,7 +246,7 @@ def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
             tickangle=-20
         ),
         yaxis=dict(
-            tickprefix="$",
+            tickprefix=symbol,
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
             tickfont=dict(color="#a5a8c8", size=11)
@@ -249,9 +254,10 @@ def create_monthly_trend_chart(monthly_cost: pd.Series) -> go.Figure:
     )
     return fig
 
-def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame = None) -> go.Figure:
+def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame = None, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds an interactive forecast chart showing predicted yhat with translucent confidence band.
+    Supports currency scaling and custom currency symbol.
     """
     fig = go.Figure()
     
@@ -261,9 +267,9 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
     else:
         dates = pd.to_datetime(forecast_df.index)
         
-    yhat = forecast_df["yhat"].values
-    yhat_lower = forecast_df["yhat_lower"].values if "yhat_lower" in forecast_df.columns else yhat
-    yhat_upper = forecast_df["yhat_upper"].values if "yhat_upper" in forecast_df.columns else yhat
+    yhat = forecast_df["yhat"].values * rate
+    yhat_lower = (forecast_df["yhat_lower"].values if "yhat_lower" in forecast_df.columns else forecast_df["yhat"].values) * rate
+    yhat_upper = (forecast_df["yhat_upper"].values if "yhat_upper" in forecast_df.columns else forecast_df["yhat"].values) * rate
     
     # Shaded confidence band (yhat_lower to yhat_upper)
     fig.add_trace(go.Scatter(
@@ -283,7 +289,7 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
         fill="tonexty",
         fillcolor="rgba(139, 92, 246, 0.16)",
         name="Confidence Interval",
-        hovertemplate="Upper Bound: $%{y:,.2f}<extra></extra>"
+        hovertemplate=f"Upper Bound: {symbol}%{{y:,.2f}}<extra></extra>"
     ))
     
     # Predicted curve (dashed electric blue)
@@ -294,7 +300,7 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
         name="Predicted Spend (yhat)",
         line=dict(color="#22d3ee", width=3, dash="dash"),
         marker=dict(size=6, color="#22d3ee", line=dict(color="#ffffff", width=1)),
-        hovertemplate="<b>Predicted</b><br>Date: %{x|%b %Y}<br>Spend: $%{y:,.2f}<extra></extra>"
+        hovertemplate=f"<b>Predicted</b><br>Date: %{{x|%b %Y}}<br>Spend: {symbol}%{{y:,.2f}}<extra></extra>"
     ))
     
     fig.update_layout(
@@ -315,7 +321,7 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
             tickfont=dict(color="#a5a8c8", size=11)
         ),
         yaxis=dict(
-            tickprefix="$",
+            tickprefix=symbol,
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
             tickfont=dict(color="#a5a8c8", size=11)
@@ -323,14 +329,16 @@ def create_forecast_chart(forecast_df: pd.DataFrame, historical_df: pd.DataFrame
     )
     return fig
 
-def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
+def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds a robust anomaly detection scatter/line chart.
     Correctly scales the Y-axis and highlights anomalies with glowing red badges.
+    Supports currency scaling and custom currency symbol.
     """
     df = anomaly_df.copy()
     df["Date"] = pd.to_datetime(df["Date"])
     df = df.sort_values("Date")
+    df["Cost_Display"] = df["Cost_USD"] * rate
     
     normal_points = df[df["Status"] == "Normal"]
     anomaly_points = df[df["Status"] == "Anomaly Detected"]
@@ -340,7 +348,7 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
     # Baseline line across all dates
     fig.add_trace(go.Scatter(
         x=df["Date"],
-        y=df["Cost_USD"],
+        y=df["Cost_Display"],
         mode="lines",
         line=dict(color="rgba(139, 92, 246, 0.35)", width=2, dash="dot"),
         showlegend=False,
@@ -351,7 +359,7 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
     if not normal_points.empty:
         fig.add_trace(go.Scatter(
             x=normal_points["Date"],
-            y=normal_points["Cost_USD"],
+            y=normal_points["Cost_Display"],
             mode="markers",
             name="Normal Spend",
             marker=dict(
@@ -359,14 +367,14 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
                 color="#60a5fa",
                 line=dict(color="rgba(255, 255, 255, 0.3)", width=1)
             ),
-            hovertemplate="<b>Normal Spend</b><br>Date: %{x|%Y-%m-%d}<br>Cost: $%{y:,.2f}<extra></extra>"
+            hovertemplate=f"<b>Normal Spend</b><br>Date: %{{x|%Y-%m-%d}}<br>Cost: {symbol}%{{y:,.2f}}<extra></extra>"
         ))
         
     # Anomaly markers (prominent, glowing red/pink)
     if not anomaly_points.empty:
         fig.add_trace(go.Scatter(
             x=anomaly_points["Date"],
-            y=anomaly_points["Cost_USD"],
+            y=anomaly_points["Cost_Display"],
             mode="markers",
             name="Anomaly Detected",
             marker=dict(
@@ -375,11 +383,11 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
                 symbol="diamond",
                 line=dict(color="#ffffff", width=2)
             ),
-            hovertemplate="<b>ANOMALY DETECTED</b><br>Date: %{x|%Y-%m-%d}<br>Cost: $%{y:,.2f}<extra></extra>"
+            hovertemplate=f"<b>ANOMALY DETECTED</b><br>Date: %{{x|%Y-%m-%d}}<br>Cost: {symbol}%{{y:,.2f}}<extra></extra>"
         ))
         
     # Calculate sensible Y range
-    max_cost = df["Cost_USD"].max() if not df.empty else 100
+    max_cost = df["Cost_Display"].max() if not df.empty else 100 * rate
     y_max = max_cost * 1.15
     
     fig.update_layout(
@@ -399,7 +407,7 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
             tickfont=dict(color="#a5a8c8", size=11)
         ),
         yaxis=dict(
-            tickprefix="$",
+            tickprefix=symbol,
             range=[0, y_max],
             gridcolor="rgba(255, 255, 255, 0.06)",
             zerolinecolor="rgba(255, 255, 255, 0.08)",
@@ -408,24 +416,26 @@ def create_anomaly_scatter_chart(anomaly_df: pd.DataFrame) -> go.Figure:
     )
     return fig
 
-def create_service_trend_chart(filtered_df: pd.DataFrame, service_name: str) -> go.Figure:
+def create_service_trend_chart(filtered_df: pd.DataFrame, service_name: str, symbol: str = "$", rate: float = 1.0) -> go.Figure:
     """
     Builds a mini trend bar/line for the individual service explorer.
+    Supports currency scaling and custom currency symbol.
     """
     df = filtered_df.copy()
     df["Date"] = pd.to_datetime(df["Date"])
     monthly = df.groupby(df["Date"].dt.strftime("%Y-%m"))["Cost_USD"].sum().reset_index()
+    monthly["Cost_Display"] = monthly["Cost_USD"] * rate
     
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=monthly["Date"],
-        y=monthly["Cost_USD"],
+        y=monthly["Cost_Display"],
         marker=dict(
             color="rgba(139, 92, 246, 0.8)",
             line=dict(color="#c084fc", width=1),
             cornerradius=6
         ),
-        hovertemplate="<b>%{x}</b><br>Cost: $%{y:,.2f}<extra></extra>"
+        hovertemplate=f"<b>%{{x}}</b><br>Cost: {symbol}%{{y:,.2f}}<extra></extra>"
     ))
     
     layout_kwargs = dict(CHART_LAYOUT)
@@ -433,7 +443,7 @@ def create_service_trend_chart(filtered_df: pd.DataFrame, service_name: str) -> 
         height=220,
         margin=dict(l=10, r=10, t=10, b=10),
         xaxis=dict(showgrid=False, tickfont=dict(size=10, color="#a5a8c8")),
-        yaxis=dict(tickprefix="$", gridcolor="rgba(255, 255, 255, 0.05)", tickfont=dict(size=10, color="#a5a8c8"))
+        yaxis=dict(tickprefix=symbol, gridcolor="rgba(255, 255, 255, 0.05)", tickfont=dict(size=10, color="#a5a8c8"))
     )
     fig.update_layout(**layout_kwargs)
     return fig

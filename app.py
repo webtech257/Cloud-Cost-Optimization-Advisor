@@ -2,7 +2,8 @@
 Cloud Cost Optimization Advisor
 Streamlit Application - Premium Dark SaaS FinOps Edition
 All backend calculations, data models, and logic preserved.
-Uses native Streamlit metrics and components with custom CSS styling to guarantee zero raw code leaks.
+Features seamless Indian Rupee (INR / ₹) conversion, exchange rate customization,
+and dual-currency awareness alongside standard AWS USD billing.
 """
 
 import streamlit as st
@@ -69,6 +70,57 @@ latest_month_spend = cost_df[cost_df["Date"] == latest_date]["Cost_USD"].sum()
 # Render styled sidebar
 render_sidebar()
 
+# ---------------------------------------------------------
+# Currency & Localization Controls in Sidebar
+# ---------------------------------------------------------
+st.sidebar.markdown(
+    "<div style='font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0.85rem 0 0.4rem 0.3rem;'>Currency & Localization</div>",
+    unsafe_allow_html=True
+)
+
+currency_mode = st.sidebar.radio(
+    "Display Currency:",
+    options=["🇮🇳 INR (₹)", "🇺🇸 USD ($)"],
+    index=0,  # Default to INR (Rupees) for Indian users
+    help="Switch all dashboard KPIs, charts, forecasts, and tables between Indian Rupees (INR) and US Dollars (USD)"
+)
+
+if currency_mode == "🇮🇳 INR (₹)":
+    curr_symbol = "₹"
+    curr_code = "INR"
+    with st.sidebar.expander("⚙️ Exchange Rate Settings", expanded=False):
+        exchange_rate = st.number_input(
+            "1 USD (in INR ₹):",
+            min_value=1.0,
+            max_value=200.0,
+            value=84.00,
+            step=0.25,
+            format="%.2f",
+            help="Configurable USD to INR conversion rate applied to AWS billing metrics"
+        )
+    curr_rate = float(exchange_rate)
+    st.sidebar.caption(f"💱 **Active Rate**: $1.00 USD = ₹{curr_rate:.2f} INR")
+else:
+    curr_symbol = "$"
+    curr_code = "USD"
+    curr_rate = 1.0
+    st.sidebar.caption("💵 **Active Currency**: US Dollars (Standard AWS billing)")
+
+# Helper formatting functions
+def fmt_val(usd_amount: float) -> str:
+    """Formats amount in active currency."""
+    val = usd_amount * curr_rate
+    return f"{curr_symbol}{val:,.2f}"
+
+def fmt_dual(usd_amount: float) -> str:
+    """Returns formatted active currency with secondary USD/INR reference."""
+    if curr_code == "INR":
+        inr_val = usd_amount * curr_rate
+        return f"₹{inr_val:,.2f} (≈ ${usd_amount:,.2f} USD)"
+    else:
+        inr_val = usd_amount * 84.00
+        return f"${usd_amount:,.2f} (≈ ₹{inr_val:,.2f} INR)"
+
 # Live AWS Integration in Sidebar
 st.sidebar.markdown(
     "<div style='font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0.85rem 0 0.4rem 0.3rem;'>AWS Live Integration</div>",
@@ -92,12 +144,12 @@ if st.sidebar.button("🔄 Sync Live AWS", help="Query AWS Cost Explorer API for
 render_hero_header()
 
 if total_cost == 0.0:
-    st.info("☁️ **Live AWS Connection Active**: Successfully connected to your live AWS account! Your recorded billing spend is currently **$0.00** (active on AWS Free Tier). The dashboard below displays your real account services.")
+    st.info("☁️ **Live AWS Connection Active**: Successfully connected to your live AWS account! Your recorded billing spend is currently **$0.00 / ₹0.00** (active on AWS Free Tier). The dashboard below displays your real account services.")
 else:
     st.success(
         f"☁️ **Live AWS Account Connected (Account ID: 012560051568)** | "
-        f"Current Month ({latest_month_str}): **${latest_month_spend:,.2f}** | "
-        f"13-Month Cumulative Spend: **${total_cost:,.2f}**"
+        f"Current Month ({latest_month_str}): **{fmt_dual(latest_month_spend)}** | "
+        f"13-Month Cumulative Spend: **{fmt_dual(total_cost)}**"
     )
 
 # ---------------------------------------------------------
@@ -105,7 +157,7 @@ else:
 # ---------------------------------------------------------
 render_section_header(
     title="Cost Overview",
-    subtitle="High-level financial KPIs and illustrative optimization summary",
+    subtitle=f"High-level financial KPIs and illustrative optimization summary in {curr_code} ({curr_symbol})",
     icon_name="wallet",
     anchor_id="cost-overview"
 )
@@ -147,22 +199,29 @@ else:
     savings_help = "Cumulative potential savings across all monitored historical cycles"
     opt_help = "Projected net cloud expenditure across the full monitored period"
 
+equiv_col1 = f"≈ ${display_cost:,.2f} USD" if curr_code == "INR" else f"≈ ₹{display_cost * 84.0:,.2f} INR"
+equiv_col3 = f"≈ ${display_optimized:,.2f} USD" if curr_code == "INR" else f"≈ ₹{display_optimized * 84.0:,.2f} INR"
+
 col1, col2, col3 = st.columns(3)
 col1.metric(
-    label="Current AWS Cost",
-    value=f"${display_cost:,.2f}",
-    help=cost_help
+    label=f"Current AWS Cost ({curr_code})",
+    value=fmt_val(display_cost),
+    delta=equiv_col1,
+    delta_color="off",
+    help=f"{cost_help} (Converted at 1 USD = ₹{curr_rate:.2f})" if curr_code == "INR" else cost_help
 )
 col2.metric(
-    label="Potential Savings",
-    value=f"${display_savings:,.2f}",
+    label=f"Potential Savings ({curr_code})",
+    value=fmt_val(display_savings),
     delta=f"↓ {savings_pct:.1f}% Savings",
     delta_color="off",
     help=savings_help
 )
 col3.metric(
-    label="Illustrative Optimized Cost",
-    value=f"${display_optimized:,.2f}",
+    label=f"Illustrative Optimized Cost ({curr_code})",
+    value=fmt_val(display_optimized),
+    delta=equiv_col3,
+    delta_color="off",
     help=opt_help
 )
 
@@ -173,7 +232,7 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="AWS Service-wise Cost Analysis",
-    subtitle="Cumulative spending by AWS service with automatic high-cost identification",
+    subtitle=f"Cumulative spending by AWS service in {curr_code} ({curr_symbol}) with automatic high-cost identification",
     icon_name="bar_chart",
     anchor_id="service-costs"
 )
@@ -187,11 +246,11 @@ service_cost = (
 col_bar, col_donut = st.columns([1.45, 1.1])
 
 with col_bar:
-    fig_bar = create_service_cost_chart(service_cost)
+    fig_bar = create_service_cost_chart(service_cost, symbol=curr_symbol, rate=curr_rate)
     st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
 with col_donut:
-    fig_donut = create_service_donut_chart(service_cost)
+    fig_donut = create_service_donut_chart(service_cost, symbol=curr_symbol, rate=curr_rate)
     st.plotly_chart(fig_donut, use_container_width=True, config={"displayModeBar": False})
 
 st.divider()
@@ -201,12 +260,10 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="Monthly AWS Cost Trend",
-    subtitle="Aggregated billing progression over historical evaluation periods",
+    subtitle=f"Aggregated billing progression in {curr_code} ({curr_symbol}) over historical evaluation periods",
     icon_name="trending_up",
     anchor_id="cost-trend"
 )
-
-cost_df["Date"] = pd.to_datetime(cost_df["Date"])
 
 monthly_cost = (
     cost_df.groupby(
@@ -216,7 +273,7 @@ monthly_cost = (
 
 monthly_cost.index = monthly_cost.index.astype(str)
 
-fig_trend = create_monthly_trend_chart(monthly_cost)
+fig_trend = create_monthly_trend_chart(monthly_cost, symbol=curr_symbol, rate=curr_rate)
 st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
 
 st.divider()
@@ -226,7 +283,7 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="AWS Cost Forecast",
-    subtitle="Machine learning projections and uncertainty intervals generated via Facebook Prophet",
+    subtitle=f"Machine learning projections in {curr_code} ({curr_symbol}) and uncertainty intervals generated via Facebook Prophet",
     icon_name="forecast",
     anchor_id="cost-forecast"
 )
@@ -238,22 +295,25 @@ if forecast_path.exists():
     forecast_df["ds"] = pd.to_datetime(forecast_df["ds"])
     forecast_df = forecast_df.set_index("ds")
 
-    st.write("Predicted AWS spending for upcoming months:")
+    st.write(f"Predicted AWS spending for upcoming months ({curr_code} {curr_symbol}):")
 
     # Interactive Plotly forecast chart with confidence band
-    fig_forecast = create_forecast_chart(forecast_df)
+    fig_forecast = create_forecast_chart(forecast_df, symbol=curr_symbol, rate=curr_rate)
     st.plotly_chart(fig_forecast, use_container_width=True, config={"displayModeBar": False})
 
     st.write("Forecast Details")
+    display_forecast_df = forecast_df[["yhat", "yhat_lower", "yhat_upper"]].copy() * curr_rate
     st.dataframe(
-        forecast_df[["yhat", "yhat_lower", "yhat_upper"]],
+        display_forecast_df,
         column_config={
-            "yhat": st.column_config.NumberColumn("Predicted Spend", format="$%.2f"),
-            "yhat_lower": st.column_config.NumberColumn("Lower Bound", format="$%.2f"),
-            "yhat_upper": st.column_config.NumberColumn("Upper Bound", format="$%.2f"),
+            "yhat": st.column_config.NumberColumn(f"Predicted Spend ({curr_symbol})", format=f"{curr_symbol}%.2f"),
+            "yhat_lower": st.column_config.NumberColumn(f"Lower Bound ({curr_symbol})", format=f"{curr_symbol}%.2f"),
+            "yhat_upper": st.column_config.NumberColumn(f"Upper Bound ({curr_symbol})", format=f"{curr_symbol}%.2f"),
         },
         use_container_width=True
     )
+    if curr_code == "INR":
+        st.caption(f"ℹ️ Forecast values converted to Indian Rupees (₹) at $1.00 USD = ₹{curr_rate:.2f} INR.")
 else:
     st.warning("⚠️ Forecast results not found. Run 'python train_forecast_model.py' to generate predictions.")
 
@@ -264,30 +324,63 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="Optimization Recommendations",
-    subtitle="Actionable FinOps strategies, rightsizing advisories, and estimated potential savings",
+    subtitle=f"Actionable FinOps strategies, rightsizing advisories, and estimated potential savings in {curr_code} ({curr_symbol})",
     icon_name="recommend",
     anchor_id="recommendations"
 )
 
-# Styled glass dataframe with full columns and clear currency/progress formatting
-st.dataframe(
-    report_df,
-    column_config={
-        "Service": st.column_config.TextColumn("Service Name", width="medium"),
-        "Current_Cost_USD": st.column_config.NumberColumn("Current Cost", format="$%.2f"),
-        "Assumed_Optimization_Percent": st.column_config.ProgressColumn(
-            "Assumed Opt %",
-            format="%d%%",
-            min_value=0,
-            max_value=100
-        ),
-        "Potential_Savings_USD": st.column_config.NumberColumn("Potential Savings", format="$%.2f"),
-        "Illustrative_Optimized_Cost_USD": st.column_config.NumberColumn("Optimized Cost", format="$%.2f"),
-        "Recommendation": st.column_config.TextColumn("Actionable Strategy", width="large")
-    },
-    use_container_width=True,
-    hide_index=True
-)
+if curr_code == "INR":
+    display_report_df = report_df.copy()
+    display_report_df["Current_Cost_INR"] = display_report_df["Current_Cost_USD"] * curr_rate
+    display_report_df["Potential_Savings_INR"] = display_report_df["Potential_Savings_USD"] * curr_rate
+    display_report_df["Optimized_Cost_INR"] = display_report_df["Illustrative_Optimized_Cost_USD"] * curr_rate
+    
+    st.dataframe(
+        display_report_df[[
+            "Service",
+            "Current_Cost_INR",
+            "Current_Cost_USD",
+            "Assumed_Optimization_Percent",
+            "Potential_Savings_INR",
+            "Optimized_Cost_INR",
+            "Recommendation"
+        ]],
+        column_config={
+            "Service": st.column_config.TextColumn("Service Name", width="medium"),
+            "Current_Cost_INR": st.column_config.NumberColumn("Current Cost (₹)", format="₹%.2f"),
+            "Current_Cost_USD": st.column_config.NumberColumn("Current Cost ($)", format="$%.2f"),
+            "Assumed_Optimization_Percent": st.column_config.ProgressColumn(
+                "Assumed Opt %",
+                format="%d%%",
+                min_value=0,
+                max_value=100
+            ),
+            "Potential_Savings_INR": st.column_config.NumberColumn("Potential Savings (₹)", format="₹%.2f"),
+            "Optimized_Cost_INR": st.column_config.NumberColumn("Optimized Cost (₹)", format="₹%.2f"),
+            "Recommendation": st.column_config.TextColumn("Actionable Strategy", width="large")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
+else:
+    st.dataframe(
+        report_df,
+        column_config={
+            "Service": st.column_config.TextColumn("Service Name", width="medium"),
+            "Current_Cost_USD": st.column_config.NumberColumn("Current Cost", format="$%.2f"),
+            "Assumed_Optimization_Percent": st.column_config.ProgressColumn(
+                "Assumed Opt %",
+                format="%d%%",
+                min_value=0,
+                max_value=100
+            ),
+            "Potential_Savings_USD": st.column_config.NumberColumn("Potential Savings", format="$%.2f"),
+            "Illustrative_Optimized_Cost_USD": st.column_config.NumberColumn("Optimized Cost", format="$%.2f"),
+            "Recommendation": st.column_config.TextColumn("Actionable Strategy", width="large")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
 
 st.divider()
 
@@ -296,7 +389,7 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="Explore Individual AWS Services",
-    subtitle="Drill down into usage metrics, individual cost trajectories, and targeted recommendations",
+    subtitle=f"Drill down into usage metrics, individual cost trajectories in {curr_code} ({curr_symbol}), and targeted recommendations",
     icon_name="explorer",
     anchor_id="service-explorer"
 )
@@ -314,9 +407,12 @@ selected_cost = filtered_df["Cost_USD"].sum()
 col_svc_left, col_svc_right = st.columns([1.0, 1.4])
 
 with col_svc_left:
+    equiv_svc = f"≈ ${selected_cost:,.2f} USD" if curr_code == "INR" else f"≈ ₹{selected_cost * 84.0:,.2f} INR"
     st.metric(
-        label=f"Total Cost for {selected_service}",
-        value=f"${selected_cost:,.2f}",
+        label=f"Total Cost for {selected_service} ({curr_code})",
+        value=fmt_val(selected_cost),
+        delta=equiv_svc,
+        delta_color="off",
         help="Aggregated cost for this specific service across all recorded periods"
     )
 
@@ -332,20 +428,35 @@ with col_svc_left:
 
 with col_svc_right:
     st.write("Monthly Expenditure Breakdown")
-    fig_svc = create_service_trend_chart(filtered_df, selected_service)
+    fig_svc = create_service_trend_chart(filtered_df, selected_service, symbol=curr_symbol, rate=curr_rate)
     st.plotly_chart(fig_svc, use_container_width=True, config={"displayModeBar": False})
 
 st.write("Usage Details")
-st.dataframe(
-    filtered_df,
-    column_config={
-        "Date": st.column_config.DateColumn("Billing Date"),
-        "Cost_USD": st.column_config.NumberColumn("Cost", format="$%.2f"),
-        "Usage_Amount": st.column_config.NumberColumn("Usage Units", format="%d")
-    },
-    use_container_width=True,
-    hide_index=True
-)
+explorer_df = filtered_df.copy()
+if curr_code == "INR":
+    explorer_df["Cost_INR"] = explorer_df["Cost_USD"] * curr_rate
+    st.dataframe(
+        explorer_df[["Date", "Cost_INR", "Cost_USD", "Usage_Amount"]],
+        column_config={
+            "Date": st.column_config.DateColumn("Billing Date"),
+            "Cost_INR": st.column_config.NumberColumn("Cost (₹)", format="₹%.2f"),
+            "Cost_USD": st.column_config.NumberColumn("Cost ($)", format="$%.2f"),
+            "Usage_Amount": st.column_config.NumberColumn("Usage Units", format="%d")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
+else:
+    st.dataframe(
+        filtered_df,
+        column_config={
+            "Date": st.column_config.DateColumn("Billing Date"),
+            "Cost_USD": st.column_config.NumberColumn("Cost", format="$%.2f"),
+            "Usage_Amount": st.column_config.NumberColumn("Usage Units", format="%d")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
 
 st.divider()
 
@@ -354,19 +465,40 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="Download Optimization Report",
-    subtitle="Export complete FinOps recommendations and cost breakdowns for offline executive review",
+    subtitle="Export complete FinOps recommendations with dual USD and INR currency breakdown for executive review",
     icon_name="download",
     anchor_id="download-report"
 )
 
-csv_data = report_df.to_csv(index=False).encode("utf-8")
+# Build comprehensive dual-currency export dataset
+export_df = report_df.copy()
+active_ex_rate = curr_rate if curr_code == "INR" else 84.00
+export_df["Exchange_Rate_USD_to_INR"] = active_ex_rate
+export_df["Current_Cost_INR"] = (export_df["Current_Cost_USD"] * active_ex_rate).round(2)
+export_df["Potential_Savings_INR"] = (export_df["Potential_Savings_USD"] * active_ex_rate).round(2)
+export_df["Illustrative_Optimized_Cost_INR"] = (export_df["Illustrative_Optimized_Cost_USD"] * active_ex_rate).round(2)
+
+export_cols = [
+    "Service",
+    "Current_Cost_USD",
+    "Current_Cost_INR",
+    "Assumed_Optimization_Percent",
+    "Potential_Savings_USD",
+    "Potential_Savings_INR",
+    "Illustrative_Optimized_Cost_USD",
+    "Illustrative_Optimized_Cost_INR",
+    "Recommendation"
+]
+export_df = export_df[[c for c in export_cols if c in export_df.columns]]
+csv_data = export_df.to_csv(index=False).encode("utf-8")
 
 col_down_text, col_down_btn = st.columns([2.0, 1.0])
 
 with col_down_text:
     st.write(
-        "Export the complete service-level optimization summary, current expenditures, "
-        "potential savings calculations, and strategic recommendations in standard CSV format."
+        f"Export the complete service-level optimization summary, current expenditures, "
+        f"potential savings, and strategic recommendations with both USD ($) and INR (₹) conversions "
+        f"(converted at 1 USD = ₹{active_ex_rate:.2f})."
     )
 
 with col_down_btn:
@@ -386,7 +518,7 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="AWS Cost Anomaly Detection",
-    subtitle="Machine learning outlier identification using scikit-learn Isolation Forest",
+    subtitle=f"Machine learning outlier identification in {curr_code} ({curr_symbol}) using scikit-learn Isolation Forest",
     icon_name="alert",
     anchor_id="anomaly-detection"
 )
@@ -422,7 +554,7 @@ if anomaly_path.exists():
 
     # Spending scatter chart
     st.write("AWS Spending Anomaly Visualization")
-    fig_anomaly = create_anomaly_scatter_chart(anomaly_df)
+    fig_anomaly = create_anomaly_scatter_chart(anomaly_df, symbol=curr_symbol, rate=curr_rate)
     st.plotly_chart(fig_anomaly, use_container_width=True, config={"displayModeBar": False})
 
     # Display detected anomalies
@@ -434,23 +566,39 @@ if anomaly_path.exists():
         st.subheader("Anomaly Alert Details")
 
         for _, row in detected_anomalies.iterrows():
+            dual_alert_cost = fmt_dual(row['Cost_USD'])
             alert_msg = (
                 f"ALERT: Unusual AWS spending detected! "
                 f"Date: {row['Date'].strftime('%Y-%m-%d')} | "
-                f"Cost: ${row['Cost_USD']:.2f}"
+                f"Cost: {dual_alert_cost}"
             )
             st.error(f"🚨 {alert_msg}")
 
-        st.dataframe(
-            detected_anomalies[["Date", "Cost_USD", "Status"]],
-            column_config={
-                "Date": st.column_config.DateColumn("Incident Date"),
-                "Cost_USD": st.column_config.NumberColumn("Spike Cost", format="$%.2f"),
-                "Status": st.column_config.TextColumn("Classification Status")
-            },
-            use_container_width=True,
-            hide_index=True
-        )
+        anom_display = detected_anomalies[["Date", "Cost_USD", "Status"]].copy()
+        if curr_code == "INR":
+            anom_display["Cost_INR"] = anom_display["Cost_USD"] * curr_rate
+            st.dataframe(
+                anom_display[["Date", "Cost_INR", "Cost_USD", "Status"]],
+                column_config={
+                    "Date": st.column_config.DateColumn("Incident Date"),
+                    "Cost_INR": st.column_config.NumberColumn("Spike Cost (₹)", format="₹%.2f"),
+                    "Cost_USD": st.column_config.NumberColumn("Spike Cost ($)", format="$%.2f"),
+                    "Status": st.column_config.TextColumn("Classification Status")
+                },
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.dataframe(
+                detected_anomalies[["Date", "Cost_USD", "Status"]],
+                column_config={
+                    "Date": st.column_config.DateColumn("Incident Date"),
+                    "Cost_USD": st.column_config.NumberColumn("Spike Cost", format="$%.2f"),
+                    "Status": st.column_config.TextColumn("Classification Status")
+                },
+                use_container_width=True,
+                hide_index=True
+            )
     else:
         st.success("✅ No anomalies detected across monitored billing intervals.")
 else:
@@ -463,7 +611,7 @@ st.divider()
 # ---------------------------------------------------------
 render_section_header(
     title="Anomaly Detection Model Evaluation",
-    subtitle="Validation scoring of Isolation Forest anomaly classifications against statistical baseline on your real AWS history",
+    subtitle=f"Validation scoring of Isolation Forest anomaly classifications against statistical baseline on your real AWS history",
     icon_name="shield_check",
     anchor_id="model-evaluation"
 )
@@ -505,17 +653,33 @@ if evaluation_path.exists():
     )
 
     st.write("Model Evaluation Dataset")
-    st.dataframe(
-        evaluation_df[["Date", "Cost_USD", "Actual", "Predicted"]],
-        column_config={
-            "Date": st.column_config.DateColumn("Evaluation Date"),
-            "Cost_USD": st.column_config.NumberColumn("Recorded Cost", format="$%.2f"),
-            "Actual": st.column_config.NumberColumn("Ground Truth Label", format="%d"),
-            "Predicted": st.column_config.NumberColumn("Model Classification", format="%d")
-        },
-        use_container_width=True,
-        hide_index=True
-    )
+    eval_display = evaluation_df[["Date", "Cost_USD", "Actual", "Predicted"]].copy()
+    if curr_code == "INR":
+        eval_display["Cost_INR"] = eval_display["Cost_USD"] * curr_rate
+        st.dataframe(
+            eval_display[["Date", "Cost_INR", "Cost_USD", "Actual", "Predicted"]],
+            column_config={
+                "Date": st.column_config.DateColumn("Evaluation Date"),
+                "Cost_INR": st.column_config.NumberColumn("Recorded Cost (₹)", format="₹%.2f"),
+                "Cost_USD": st.column_config.NumberColumn("Recorded Cost ($)", format="$%.2f"),
+                "Actual": st.column_config.NumberColumn("Ground Truth Label", format="%d"),
+                "Predicted": st.column_config.NumberColumn("Model Classification", format="%d")
+            },
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.dataframe(
+            evaluation_df[["Date", "Cost_USD", "Actual", "Predicted"]],
+            column_config={
+                "Date": st.column_config.DateColumn("Evaluation Date"),
+                "Cost_USD": st.column_config.NumberColumn("Recorded Cost", format="$%.2f"),
+                "Actual": st.column_config.NumberColumn("Ground Truth Label", format="%d"),
+                "Predicted": st.column_config.NumberColumn("Model Classification", format="%d")
+            },
+            use_container_width=True,
+            hide_index=True
+        )
 
     st.caption(
         "ℹ️ Model evaluated directly on real AWS billing intervals from Account 012560051568."
