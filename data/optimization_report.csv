@@ -1,0 +1,20 @@
+Service,Current_Cost_USD,Assumed_Optimization_Percent,Potential_Savings_USD,Illustrative_Optimized_Cost_USD,Recommendation
+AWS CloudFormation,0.0,5,0.0,0.0,Review AWS CloudFormation usage and rightsizing opportunities.
+AWS Glue,0.0,5,0.0,0.0,Review AWS Glue usage and rightsizing opportunities.
+AWS Key Management Service,0.0,5,0.0,0.0,Review AWS Key Management Service usage and rightsizing opportunities.
+AWS Lambda,0.0,8,0.0,0.0,Optimize execution duration and memory allocation to minimize billed compute time.
+AWS Secrets Manager,10.07,5,0.5,9.57,Review AWS Secrets Manager usage and rightsizing opportunities.
+AWS WAF,0.0,5,0.0,0.0,Review AWS WAF usage and rightsizing opportunities.
+Amazon API Gateway,0.0,5,0.0,0.0,Review Amazon API Gateway usage and rightsizing opportunities.
+Amazon CloudFront,0.0,5,0.0,0.0,Review Amazon CloudFront usage and rightsizing opportunities.
+Amazon DynamoDB,0.0,10,0.0,0.0,Review read/write capacity modes and switch idle tables to on-demand.
+Amazon Elastic Compute Cloud - Compute,0.01,15,0.0,0.01,"Right-size underutilized instances, apply automated stop/start scheduling, and leverage Spot instances or Savings Plans."
+Amazon Location Service,0.0,5,0.0,0.0,Review Amazon Location Service usage and rightsizing opportunities.
+Amazon Relational Database Service,1.26,12,0.15,1.11,"Review database instance sizing, identify idle instances, and schedule non-production databases."
+Amazon Simple Notification Service,0.0,5,0.0,0.0,Review Amazon Simple Notification Service usage and rightsizing opportunities.
+Amazon Simple Queue Service,0.0,5,0.0,0.0,Review Amazon Simple Queue Service usage and rightsizing opportunities.
+Amazon Simple Storage Service,0.0,10,0.0,0.0,"Review storage classes and consider lifecycle policies (e.g., S3 Intelligent-Tiering)."
+Amazon Virtual Private Cloud,45.91,5,2.3,43.61,Review Amazon Virtual Private Cloud usage and rightsizing opportunities.
+AmazonCloudWatch,18.88,5,0.94,17.94,Review log retention periods and delete unneeded custom metrics.
+EC2 - Other,0.0,15,0.0,0.0,"Right-size underutilized instances, apply automated stop/start scheduling, and leverage Spot instances or Savings Plans."
+Tax,13.68,5,0.68,13.0,Review Tax usage and rightsizing opportunities.

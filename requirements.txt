@@ -1,0 +1,8 @@
+boto3
+pandas
+prophet
+streamlit
+matplotlib
+numpy
+plotly
+scikit-learn

@@ -1,0 +1,14 @@
+Date,Cost_USD,Month_Number,Anomaly,Status
+2025-11-01,7.08,1,1,Normal
+2025-12-01,7.22,2,1,Normal
+2026-01-01,7.22,3,1,Normal
+2026-02-01,6.8,4,-1,Anomaly Detected
+2026-03-01,7.22,5,1,Normal
+2026-04-01,7.08,6,1,Normal
+2026-05-01,7.22,7,1,Normal
+2026-06-01,7.08,8,1,Normal
+2026-07-01,7.22,9,1,Normal
+2026-08-01,7.22,10,1,Normal
+2026-09-01,7.08,11,1,Normal
+2026-10-01,7.23,12,1,Normal
+2026-11-01,4.13,13,-1,Anomaly Detected
