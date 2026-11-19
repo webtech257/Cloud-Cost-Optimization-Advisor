@@ -29,10 +29,20 @@ from ui.charts import (
     create_monthly_trend_chart,
     create_forecast_chart,
     create_anomaly_scatter_chart,
-    create_service_trend_chart,
-    PLOTLY_CONFIG
+    create_service_trend_chart
 )
 from fetch_aws_cost_data import fetch_real_aws_costs
+
+# Plotly Mobile UX Configuration: Prevents scroll-hijacking & enables responsive gestures
+PLOTLY_CONFIG = dict(
+    displayModeBar=False,
+    scrollZoom=False,
+    doubleClick=False,
+    showAxisDragHandles=False,
+    showAxisRangeEntryBoxes=False,
+    staticPlot=False,
+    responsive=True
+)
 
 # ---------------------------------------------------------
 # 1. Dashboard Configuration & Global Styles
